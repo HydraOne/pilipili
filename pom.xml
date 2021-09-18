@@ -10,7 +10,9 @@
     <description>Demo project for Spring Boot</description>
 
     <properties>
-        <java.version>11</java.version>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <spring-boot.version>2.3.7.RELEASE</spring-boot.version>
@@ -18,10 +20,10 @@
     </properties>
 
     <modules>
-        <module>pilipili-model</module>
-        <module>pilipili-service</module>
-        <module>pilipili-web</module>
-        <module>start</module>
+        <module>pilipili-fileProcess</module>
+        <module>pilipili-view</module>
+        <module>pilipili-gateway</module>
+        <module>pilipili-commons</module>
     </modules>
 
     <dependencyManagement>
@@ -37,6 +39,13 @@
                 <groupId>com.alibaba.cloud</groupId>
                 <artifactId>spring-cloud-alibaba-dependencies</artifactId>
                 <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>Hoxton.SR12</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -62,8 +71,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

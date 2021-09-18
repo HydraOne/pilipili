@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.geny.pilipili.mapper.FilesMapper">
+    <resultMap id="BaseResultMap" type="cn.geny.pilipili.entity.Files">
+        <id column="id" jdbcType="CHAR" property="id"/>
+        <result column="policy_id" jdbcType="INTEGER" property="policyId"/>
+        <result column="pic_info" jdbcType="VARCHAR" property="picInfo"/>
+        <result column="size" jdbcType="BIGINT" property="size"/>
+        <result column="folder_id" jdbcType="INTEGER" property="folderId"/>
+        <result column="source_name" jdbcType="VARCHAR" property="sourceName"/>
+        <result column="user_id" jdbcType="INTEGER" property="userId"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt"/>
+        <result column="created_at" jdbcType="TIMESTAMP" property="createdAt"/>
+        <result column="deleted_at" jdbcType="TIMESTAMP" property="deletedAt"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, policy_id, pic_info, `size`, folder_id, source_name, user_id, `name`, updated_at,
+    created_at, deleted_at
+    </sql>
+    <select id="selectByPrimaryKey" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from files
+        where id = #{id,jdbcType=CHAR}
+    </select>
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.String">
+        delete
+        from files
+        where id = #{id,jdbcType=CHAR}
+    </delete>
+    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="cn.geny.pilipili.entity.Files"
+            useGeneratedKeys="true">
+        insert into files (id, policy_id, pic_info, `size`,
+                           folder_id, source_name, user_id,
+                           `name`, updated_at, created_at,
+                           deleted_at)
+        values (#{id,jdbcType=VARCHAR}, #{policyId,jdbcType=INTEGER}, #{picInfo,jdbcType=VARCHAR},
+                #{size,jdbcType=BIGINT},
+                #{folderId,jdbcType=INTEGER}, #{sourceName,jdbcType=VARCHAR}, #{userId,jdbcType=INTEGER},
+                #{name,jdbcType=VARCHAR}, #{updatedAt,jdbcType=TIMESTAMP}, #{createdAt,jdbcType=TIMESTAMP},
+                #{deletedAt,jdbcType=TIMESTAMP})
+    </insert>
+    <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="cn.geny.pilipili.entity.Files"
+            useGeneratedKeys="true">
+        insert into files
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="policyId != null">
+                policy_id,
+            </if>
+            <if test="picInfo != null">
+                pic_info,
+            </if>
+            <if test="size != null">
+                `size`,
+            </if>
+            <if test="folderId != null">
+                folder_id,
+            </if>
+            <if test="sourceName != null">
+                source_name,
+            </if>
+            <if test="userId != null">
+                user_id,
+            </if>
+            <if test="name != null">
+                `name`,
+            </if>
+            <if test="updatedAt != null">
+                updated_at,
+            </if>
+            <if test="createdAt != null">
+                created_at,
+            </if>
+            <if test="deletedAt != null">
+                deleted_at,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=VARCHAR},
+            </if>
+            <if test="policyId != null">
+                #{policyId,jdbcType=INTEGER},
+            </if>
+            <if test="picInfo != null">
+                #{picInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="size != null">
+                #{size,jdbcType=BIGINT},
+            </if>
+            <if test="folderId != null">
+                #{folderId,jdbcType=INTEGER},
+            </if>
+            <if test="sourceName != null">
+                #{sourceName,jdbcType=VARCHAR},
+            </if>
+            <if test="userId != null">
+                #{userId,jdbcType=INTEGER},
+            </if>
+            <if test="name != null">
+                #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="updatedAt != null">
+                #{updatedAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdAt != null">
+                #{createdAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deletedAt != null">
+                #{deletedAt,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+    <update id="updateByPrimaryKeySelective" parameterType="cn.geny.pilipili.entity.Files">
+        update files
+        <set>
+            <if test="policyId != null">
+                policy_id = #{policyId,jdbcType=INTEGER},
+            </if>
+            <if test="picInfo != null">
+                pic_info = #{picInfo,jdbcType=VARCHAR},
+            </if>
+            <if test="size != null">
+                `size` = #{size,jdbcType=BIGINT},
+            </if>
+            <if test="folderId != null">
+                folder_id = #{folderId,jdbcType=INTEGER},
+            </if>
+            <if test="sourceName != null">
+                source_name = #{sourceName,jdbcType=VARCHAR},
+            </if>
+            <if test="userId != null">
+                user_id = #{userId,jdbcType=INTEGER},
+            </if>
+            <if test="name != null">
+                `name` = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createdAt != null">
+                created_at = #{createdAt,jdbcType=TIMESTAMP},
+            </if>
+            <if test="deletedAt != null">
+                deleted_at = #{deletedAt,jdbcType=TIMESTAMP},
+            </if>
+        </set>
+        where id = #{id,jdbcType=CHAR}
+    </update>
+    <update id="updateByPrimaryKey" parameterType="cn.geny.pilipili.entity.Files">
+        update files
+        set policy_id   = #{policyId,jdbcType=INTEGER},
+            pic_info    = #{picInfo,jdbcType=VARCHAR},
+            `size`      = #{size,jdbcType=BIGINT},
+            folder_id   = #{folderId,jdbcType=INTEGER},
+            source_name = #{sourceName,jdbcType=VARCHAR},
+            user_id     = #{userId,jdbcType=INTEGER},
+            `name`      = #{name,jdbcType=VARCHAR},
+            updated_at  = #{updatedAt,jdbcType=TIMESTAMP},
+            created_at  = #{createdAt,jdbcType=TIMESTAMP},
+            deleted_at  = #{deletedAt,jdbcType=TIMESTAMP}
+        where id = #{id,jdbcType=CHAR}
+    </update>
+</mapper>
