@@ -24,6 +24,7 @@
         <module>pilipili-view</module>
         <module>pilipili-gateway</module>
         <module>pilipili-commons</module>
+        <module>pilipili-tmp</module>
     </modules>
 
     <dependencyManagement>

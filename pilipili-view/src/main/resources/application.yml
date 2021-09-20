@@ -1,0 +1,39 @@
+# 应用服务 WEB 访问端口
+server:
+  port: 80
+# 应用名称
+spring:
+  application:
+    name: pilipili-view
+  # THYMELEAF (ThymeleafAutoConfiguration)
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.80.128:8080 #配置Nacos地址
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+  thymeleaf:
+    # 开启模板缓存（默认值： true ）
+    cache: false
+    # 检查模板是否存在，然后再呈现
+    check-template: true
+    # 检查模板位置是否正确（默认值 :true ）
+    check-template-location: true
+    #Content-Type 的值（默认值： text/html ）
+    content-type: text/html
+    # 开启 MVC Thymeleaf 视图解析（默认值： true ）
+    enabled: true
+    # 模板编码
+    encoding: UTF-8
+    # 要被排除在解析之外的视图名称列表，⽤逗号分隔
+    excluded-view-names:
+    # 要运⽤于模板之上的模板模式。另⻅ StandardTemplate-ModeHandlers( 默认值： HTML5)
+    mode: HTML5
+    # 在构建 URL 时添加到视图名称前的前缀（默认值： classpath:/templates/ ）
+    prefix: classpath:/templates/
+    suffix: .html

@@ -15,11 +15,8 @@ hello
 </body>
 <script type="text/javascript">
     let bytesPerPiece = 1024 * 1024; // 每个文件切片大小定为1MB .
-    let uploadedPiece = 0;
     //发送请求
-
     $("#upload").click(upload)
-
     function upload() {
         let blob = document.getElementById("file").files[0];
         let fileInfoForm = new FormData();
@@ -33,47 +30,43 @@ hello
         })
     }
 
-    function countMD5(chunk, callback) {
-        let fileReader = new FileReader();
-        fileReader.readAsArrayBuffer(chunk);
-        let md5Str = '';
-        fileReader.onloadend = function () {
-            md5Str = SparkMD5.ArrayBuffer.hash(fileReader.result);
-            callback(md5Str);
-        };
+    async function countMD5(chunk) {
+        return new Promise(function (resolve, reject){
+            let fileReader = new FileReader();
+            fileReader.readAsArrayBuffer(chunk);
+            let md5Str = '';
+            fileReader.onloadend = function () {
+                md5Str = SparkMD5.ArrayBuffer.hash(fileReader.result);
+                resolve(md5Str)
+            };
+        })
     }
 
-    function uploadFileToServer(md5, fileId, blob, index, count) {
+    async function uploadFileToServer(md5, fileId, blob, index, count) {
         // 给每一片切片设置名字，名字的值为原始名称加索引，这样做是为了让后端可以按照索引顺序合并图片。
         let sliceIndex = blob.name + index;
         // 利用formData来传递数据
         let formData = new FormData();
         formData.append("file", blob);
-        formData.append("index", index);
-        formData.append("truthMD5", md5);
-        $.ajax({
-            url: `http://localhost:9000/file/upload/`+fileId +'/' + md5 + '/' + index,
-            type: 'POST',
-            data: formData,
-            processData: false,  // 不处理数据
-            contentType: false,  // 不设置内容类型
-        }).done(function (res) {
-            console.log(res);
-            console.log(count + ":" + index)
-            if (count === ++uploadedPiece) {
-                console.log("上传结束,请求拼接接口，将切片信息拼接完整，返回图片url");
-                $.post('http://localhost:9000/file/merge', {'fileId': fileId}, function (data) {
-                    console.log(data);
-                })
-            }
-        }).fail(function (res) {
-            console.log("上传失败")
+        return new Promise(function (resolve,reject){
+            $.ajax({
+                url: `http://10.55.25.25:9000/file/upload/`+fileId +'/' + md5 + '/' + index,
+                type: 'POST',
+                data: formData,
+                processData: false,  // 不处理数据
+                contentType: false,  // 不设置内容类型
+            }).done(function (res) {
+                resolve(res);
+            }).fail(function (res) {
+                console.log("上传失败")
+                reject(res);
+            });
         });
     }
 
     function uploadFileInfo(fileInfoForm, successCall, failCall) {
         $.ajax({
-            url: 'http://localhost:9000/file/uploadFileInfo',
+            url: 'http://10.55.25.25:9000/file/uploadFileInfo',
             type: 'POST',
             data: fileInfoForm,
             sync: true,
@@ -98,6 +91,7 @@ hello
         // 切片的索引
         let index = 0;
         // 启动while循环对文件切片
+        let uploadedPiece = 0;
         while (start < filesize) {
             // 设置切片的结束位置
             end = start + bytesPerPiece;
@@ -108,17 +102,27 @@ hello
             // 切割文件
             let chunk = blob.slice(start, end);//切割文件
             let part = ++index;
-            let promise = new Promise(function (resolve, reject){
-                countMD5(chunk, function (md5Str) {
-                    resolve(md5Str);
-                })
+            let promise = new Promise(async function (resolve, reject) {
+                let md5Str = await countMD5(chunk);
+                resolve(md5Str);
             });
-            promise.then(function (md5Str){
-                uploadFileToServer(md5Str, fileId,chunk,part, count);
+            promise.then(async function (md5Str) {
+                let uploadStatus = await uploadFileToServer(md5Str, fileId, chunk, part, count);
+                if (uploadStatus['msg']==='success'){
+                    console.log(uploadStatus)
+                    uploadedPiece++;
+                }
+                if (count === uploadedPiece) {
+                    console.log("上传结束,请求拼接接口，将切片信息拼接完整，返回图片url");
+                    $.get({
+                        url : 'http://10.55.25.25:9000/file/newMerge/' + fileId,
+                        success : function (data) {
+                        console.log(data);
+                    }})
+                }
             })
             start = end;
         }
     }
-
 </script>
 </html>

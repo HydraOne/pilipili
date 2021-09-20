@@ -1,4 +1,4 @@
-package cn.geny.pilipili;
+package cn.geny;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,8 +7,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 @SpringBootApplication
 @EnableDiscoveryClient
-public class Application {
+public class PiliPiliViewApplication {
     public static void main(String[] args) {
-        final ConfigurableApplicationContext run = SpringApplication.run(Application.class, args);
+        final ConfigurableApplicationContext run = SpringApplication.run(PiliPiliViewApplication.class, args);
     }
 }
