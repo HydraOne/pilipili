@@ -4,6 +4,9 @@ import cn.geny.pilipili.entity.Files;
 import cn.geny.pilipili.service.FileService;
 import cn.geny.pilipili.service.FileTmpService;
 import cn.geny.utils.R;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.UUID;
 
 @RestController
@@ -41,21 +45,20 @@ public class UploadFileController {
     public R uploadFile(MultipartFile file, @PathVariable("fileId") String fileId, @PathVariable("fileMD5") String fileMD5, @PathVariable("partNum") String partNum) throws IOException {
         String md5Hex = DigestUtils.md5Hex(file.getInputStream());
         String fileNum = fileId + "_" + partNum;
-        fileTmpService.insert(fileNum, hostAddress + ":" + port);
+        boolean uploadIsSuccess = false;
         if (md5Hex.equals(fileMD5)) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        file.transferTo(new File(storagePath + fileNum));
-                    }catch (IOException ioException){
-                        log.warn("upload file '{} is fail'",fileNum);
-                    }
-                }
-            }).start();
-            return R.ok().put("partNum", partNum);
+            try {
+                file.transferTo(new File(storagePath + fileNum));
+                fileTmpService.insert(fileNum, hostAddress + ":" + port);
+                uploadIsSuccess = true;
+            } catch (IOException ioException) {
+                log.warn("upload file '{} is fail'", fileNum);
+            }
+        }
+        if (uploadIsSuccess) {
+            return R.ok().put("fileNum",fileNum);
         } else {
-            return R.error("file error");
+            return R.error("file pieces " + fileNum + "upload is fail ");
         }
     }
 
@@ -97,40 +100,44 @@ public class UploadFileController {
         Files files = fileServiceImpl.selectByPrimaryKey(fileNum);
         String fileName = files.getName();
         long totalSize = files.getSize();
-        long totalPieces = (long) Math.ceil((totalSize / (1024 * 1024F)));
+        int totalPieces = (int) Math.ceil((totalSize / (1024 * 1024F)));
         new Thread(new Runnable() {
             @Override
             public void run() {
+                boolean mergeIsSuccess = true;
                 for (int index = 1; index <= totalPieces; index++) {
                     String hostAddress = fileTmpService.get(fileNum + "_" + index);
                     String resourceURL = "http://" + hostAddress + "/file/getFilePart/" + fileNum + "_" + index;
-                    try (
-                         FileOutputStream fos = new FileOutputStream(new File(storagePath + fileName), true)) {
+                    try (FileOutputStream fos = new FileOutputStream(new File(storagePath + fileName), true)) {
                         byte[] cache = restTemplate.getForObject(resourceURL, byte[].class);
                         fos.write(cache);
                     } catch (Exception e) {
-                        log.warn("merge is fail '{}'",resourceURL);
+                        mergeIsSuccess = false;
+                        log.warn("get resource is fail '{}'", resourceURL);
                     }
                 }
-                log.info(fileNum + " merge is done");
+                if (mergeIsSuccess){
+                    log.info(fileNum + " merge is done");
+                }else {
+                    log.info(fileNum + " merge is fail");
+                }
             }
         }).start();
         return R.ok("upload is done");
     }
 
     @GetMapping("getFilePart/{fileNum}")
-    public void getFile(
-            @PathVariable("fileNum") String fileNum,
-            HttpServletResponse response) {
+    public void getFile(@PathVariable("fileNum") String fileNum,HttpServletResponse response) throws IOException {
+        boolean getFilePieceIsSuccess = false;
         try (   // get your file as InputStream
                 InputStream is = new FileInputStream(new File(storagePath + fileNum));
-                ){
+        ) {
             // copy it to response's OutputStream
             org.apache.commons.io.IOUtils.copy(is, response.getOutputStream());
             response.flushBuffer();
-        } catch (FileNotFoundException ex){
-            log.warn("File is not found '{}'",fileNum);
-        }catch (IOException ex) {
+        } catch (FileNotFoundException ex) {
+            log.warn("File is not found '{}'", fileNum);
+        } catch (IOException ex) {
             log.warn("Error writing file to output stream. Filename was '{}'", fileNum);
         }
     }

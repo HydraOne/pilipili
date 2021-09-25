@@ -14,7 +14,7 @@ spring:
     base-url: http://192.168.80.128:9411
   sleuth:
     sampler:
-      probability: 1
+      probability: 50
 
   datasource:
     url: jdbc:mysql://192.168.80.128:3306/pilipili

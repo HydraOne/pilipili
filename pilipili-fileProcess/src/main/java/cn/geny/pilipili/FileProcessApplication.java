@@ -11,6 +11,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 @EnableFeignClients
 public class FileProcessApplication {
     public static void main(String[] args) {
-        final ConfigurableApplicationContext run = SpringApplication.run(FileProcessApplication.class, args);
+        ConfigurableApplicationContext run = SpringApplication.run(FileProcessApplication.class, args);
     }
 }

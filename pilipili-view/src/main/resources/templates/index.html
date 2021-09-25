@@ -5,6 +5,8 @@
     <title>Title</title>
     <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/spark-md5/3.0.0/spark-md5.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.js"></script>
+
 </head>
 <body>
 hello
@@ -17,6 +19,7 @@ hello
     let bytesPerPiece = 1024 * 1024; // 每个文件切片大小定为1MB .
     //发送请求
     $("#upload").click(upload)
+
     function upload() {
         let blob = document.getElementById("file").files[0];
         let fileInfoForm = new FormData();
@@ -24,14 +27,14 @@ hello
         let fileSize = blob.size;
         fileInfoForm.append("name", fileName);
         fileInfoForm.append("size", fileSize);
-        uploadFileInfo(fileInfoForm, function (res) {
-            let fileId = res['uuid'];
+        uploadFileInfo(fileInfoForm, function (data) {
+            let fileId = data['uuid'];
             startUploadFile(fileId, blob)
         })
     }
 
     async function countMD5(chunk) {
-        return new Promise(function (resolve, reject){
+        return new Promise(function (resolve, reject) {
             let fileReader = new FileReader();
             fileReader.readAsArrayBuffer(chunk);
             let md5Str = '';
@@ -48,16 +51,32 @@ hello
         // 利用formData来传递数据
         let formData = new FormData();
         formData.append("file", blob);
-        return new Promise(function (resolve,reject){
-            $.ajax({
-                url: `http://10.55.25.25:9000/file/upload/`+fileId +'/' + md5 + '/' + index,
-                type: 'POST',
+        return new Promise(function (resolve, reject) {
+            axios.interceptors.request.use(function (config) {
+
+                config.metadata = {startTime: new Date()}
+                return config;
+            }, function (error) {
+                return Promise.reject(error);
+            });
+            axios.interceptors.response.use(function (response) {
+
+                response.config.metadata.endTime = new Date()
+                response.duration = response.config.metadata.endTime - response.config.metadata.startTime
+                return response;
+            }, function (error) {
+                error.config.metadata.endTime = new Date();
+                error.duration = error.config.metadata.endTime - error.config.metadata.startTime;
+                return Promise.reject(error);
+            });
+            axios.request({
+                url: `http://10.55.25.25:9000/file/upload/` + fileId + '/' + md5 + '/' + index,
+                method: 'POST',
                 data: formData,
-                processData: false,  // 不处理数据
-                contentType: false,  // 不设置内容类型
-            }).done(function (res) {
-                resolve(res);
-            }).fail(function (res) {
+            }).then(function (response) {
+                console.log(response.duration);
+                resolve(response.data);
+            }).catch(function (res) {
                 console.log("上传失败")
                 reject(res);
             });
@@ -65,18 +84,15 @@ hello
     }
 
     function uploadFileInfo(fileInfoForm, successCall, failCall) {
-        $.ajax({
+        axios.request({
             url: 'http://10.55.25.25:9000/file/uploadFileInfo',
-            type: 'POST',
+            method: 'POST',
             data: fileInfoForm,
-            sync: true,
-            processData: false,  // 不处理数据
-            contentType: false,  // 不设置内容类型
-        }).done(function (res) {
-            console.log(res);
-            successCall(res)
-        }).fail(function (res) {
-            failCall(res);
+        }).then(function (response) {
+            console.log(response);
+            successCall(response.data)
+        }).catch(function (response) {
+            failCall(response.data);
         });
     }
 
@@ -107,20 +123,24 @@ hello
                 resolve(md5Str);
             });
             promise.then(async function (md5Str) {
-                let uploadStatus = await uploadFileToServer(md5Str, fileId, chunk, part, count);
-                if (uploadStatus['msg']==='success'){
+                    let uploadStatus = await uploadFileToServer(md5Str, fileId, chunk, part, count);
                     console.log(uploadStatus)
-                    uploadedPiece++;
+                    if (uploadStatus['msg'] === 'success') {
+                        uploadedPiece++;
+                    }
+                    if (count === uploadedPiece) {
+                        console.log("上传结束,请求拼接接口，将切片信息拼接完整，返回图片url");
+                        axios.get('http://10.55.25.25:9000/file/newMerge/' + fileId).then(function (response) {
+                            console.log(response.data)
+                            if (response["failPieces"] !== undefined && response["failPieces"].size !== 0) {
+                                for (const failPieces in response["failPieces"]) {
+                                    uploadFileToServer(md5Str, fileId, chunk, failPieces, count);
+                                }
+                            }
+                        })
+                    }
                 }
-                if (count === uploadedPiece) {
-                    console.log("上传结束,请求拼接接口，将切片信息拼接完整，返回图片url");
-                    $.get({
-                        url : 'http://10.55.25.25:9000/file/newMerge/' + fileId,
-                        success : function (data) {
-                        console.log(data);
-                    }})
-                }
-            })
+            )
             start = end;
         }
     }
